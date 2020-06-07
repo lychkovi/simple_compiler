@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Источник: https://habr.com/ru/post/133780/
 #
@@ -13,6 +13,7 @@
 #
 
 import sys
+import struct		# converting float to byte array
 
 class Lexer:
 
@@ -30,7 +31,7 @@ class Lexer:
 	ch = ' ' # допустим, первый символ - это пробел
 
 	def error(self, msg):
-		print 'Lexer error: ', msg
+		print('Lexer error: ', msg)
 		sys.exit(1)
 
 	def getc(self):
@@ -101,7 +102,7 @@ class Parser:
 		self.lexer = lexer
 
 	def error(self, msg):
-		print 'Parser error:', msg
+		print('Parser error:', msg)
 		sys.exit(1)
 
 	def term(self):
@@ -261,10 +262,10 @@ class VirtualMachine:
 			elif op == JMP: pc = arg;
 			elif op == HALT: break
 
-		print 'Execution finished.'
+		print('Execution finished.')
 		for i in xrange(26):
 			if var[i] != 0:
-				print '%c = %d' % (chr(i+ord('a')), var[i])
+				print('%c = %d' % (chr(i+ord('a')), var[i]))
 
 class Compiler:
 	
@@ -281,7 +282,23 @@ class Compiler:
 			self.gen(node.value)
 		elif node.kind == Parser.CONST:
 			self.gen(IPUSH)
-			self.gen(node.value)
+			value = float(node.value) # float = double
+			ba = bytearray(struct.pack("d", value))
+			for b in ba:
+				self.gen(b)
+		elif node.kind == Parser.STRING:
+			self.gen(IPUSH)
+			string = node.value
+			self.gen(240)
+			self.gen(127)
+			self.gen(0)
+			self.gen(0)
+			length = len(string)
+			ba = length.to_bytes(4, 'little')
+			for b in ba:
+				self.gen(b)
+			for s in string:
+				self.gen(s)
 		elif node.kind == Parser.ADD:
 			self.compile(node.op1)
 			self.compile(node.op2)
@@ -338,8 +355,8 @@ class Compiler:
 def main():
 	print("Hello World!")
 	#main_test_lexer()
-	main_test_parser()
-	#main_compile()
+	#main_test_parser()
+	main_compile()
 
 def main_test_lexer():
 	lexer = Lexer()
@@ -364,6 +381,7 @@ def main_compile():
 	print(program)
 
 if __name__ == "__main__":
+	print(sys.float_info)
 	main()
 
 
