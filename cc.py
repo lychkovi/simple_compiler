@@ -1,13 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Источник: https://habr.com/ru/post/133780/
+#
+# Тест на обычную обработку:
+# echo "{ a = 1; b = 2; c = a + b; }" | ./cc.py
+#
+# Тест на выделение константной строки:
+# echo "{ a = \"hello\"; b = \" world\"; }" | ./cc.py
 
 import sys
 
 class Lexer:
 
 	NUM, ID, IF, ELSE, WHILE, DO, LBRA, RBRA, LPAR, RPAR, PLUS, MINUS, LESS, \
-	EQUAL, SEMICOLON, EOF = range(16)
+	EQUAL, SEMICOLON, EOF, STR = range(17)
 
 	# специальные символы языка
 	SYMBOLS = { '{': LBRA, '}': RBRA, '=': EQUAL, ';': SEMICOLON, '(': LPAR,
@@ -25,6 +31,9 @@ class Lexer:
 
 	def getc(self):
 		self.ch = sys.stdin.read(1)
+
+	def print_tok(self):
+		print(self.sym, self.value)
 	
 	def next_tok(self):
 		self.value = None
@@ -56,8 +65,21 @@ class Lexer:
 					self.value = ord(ident) - ord('a')
 				else:
 					self.error('Unknown identifier: ' + ident)
+			elif self.ch == '\"':
+				strval = ''
+				self.getc()
+				while self.ch != '\"':
+					if len(self.ch) == 0:
+						self.error('Unexpected end of file after string: ' + strval)
+					else:
+						strval = strval + self.ch
+					self.getc()
+				self.getc()
+				self.value = strval
+				self.sym = Lexer.STR
 			else:
 				self.error('Unexpected symbol: ' + self.ch)
+		#self.print_tok()
 
 class Node:
 	def __init__(self, kind, value = None, op1 = None, op2 = None, op3 = None):
@@ -289,7 +311,19 @@ class Compiler:
 
 def main():
 	print("Hello World!")
+	main_test_lexer()
+	#main_compile()
+
+def main_test_lexer():
 	lexer = Lexer()
+	lexer.next_tok()
+	while lexer.sym != Lexer.EOF:
+		lexer.print_tok()
+		lexer.next_tok()
+	print("Lexer was successfull!")
+
+def main_compile():
+	lexer = Lexer() 
 	parser = Parser(lexer)
 	node = parser.parse()
 	compiler = Compiler()
