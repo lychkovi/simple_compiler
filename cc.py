@@ -7,6 +7,10 @@
 #
 # Тест на выделение константной строки:
 # echo "{ a = \"hello\"; b = \" world\"; }" | ./cc.py
+#
+# Тест на визуализацию дерева разбора:
+# echo "{ a = 1; b = 2; }" | ./cc.py
+#
 
 import sys
 
@@ -190,12 +194,30 @@ class Parser:
 			self.lexer.next_tok()
 		return n
 
+	def print_node(self, node, level):
+		indent = ''
+		for i in range(level):
+			indent = indent + '  '
+		if node.value != None:
+			print(indent, node.kind, node.value)
+		else:
+			print(indent, node.kind)
+		level_next = level + 1
+		if node.op1 != None:
+			self.print_node(node.op1, level_next)
+		if node.op2 != None:
+			self.print_node(node.op2, level_next)
+		if node.op3 != None:
+			self.print_node(node.op3, level_next)
+
 	def parse(self):
 		self.lexer.next_tok()
 		node = Node(Parser.PROG, op1 = self.statement())
 		if (self.lexer.sym != Lexer.EOF):
 			self.error("Invalid statement syntax")
 		return node
+
+
 
 IFETCH, ISTORE, IPUSH, IPOP, IADD, ISUB, ILT, JZ, JNZ, JMP, HALT = range(11)
 
@@ -311,7 +333,8 @@ class Compiler:
 
 def main():
 	print("Hello World!")
-	main_test_lexer()
+	#main_test_lexer()
+	main_test_parser()
 	#main_compile()
 
 def main_test_lexer():
@@ -321,6 +344,12 @@ def main_test_lexer():
 		lexer.print_tok()
 		lexer.next_tok()
 	print("Lexer was successfull!")
+
+def main_test_parser():
+	lexer = Lexer() 
+	parser = Parser(lexer)
+	node = parser.parse()
+	parser.print_node(node, 1)
 
 def main_compile():
 	lexer = Lexer() 
