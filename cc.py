@@ -95,7 +95,7 @@ class Node:
 
 class Parser:
 
-	VAR, CONST, ADD, SUB, LT, SET, IF1, IF2, WHILE, DO, EMPTY, SEQ, EXPR, PROG = range(14)
+	VAR, CONST, ADD, SUB, LT, SET, IF1, IF2, WHILE, DO, EMPTY, SEQ, EXPR, PROG, STRING = range(15)
 
 	def __init__(self, lexer):
 		self.lexer = lexer
@@ -111,6 +111,10 @@ class Parser:
 			return n
 		elif self.lexer.sym == Lexer.NUM:
 			n = Node(Parser.CONST, self.lexer.value)
+			self.lexer.next_tok()
+			return n
+		elif self.lexer.sym == Lexer.STR:
+			n = Node(Parser.STRING, self.lexer.value)
 			self.lexer.next_tok()
 			return n
 		else:
