@@ -11,6 +11,9 @@
 # Тест на визуализацию дерева разбора:
 # echo "{ a = 1; b = 2; }" | ./cc.py
 #
+# Тест конкатенации строк
+# echo "{ a = \"hello\"; b = \" world\"; c = a ' b; }" | ./cc.py
+#
 
 import sys
 import struct		# converting float to byte array
@@ -18,11 +21,11 @@ import struct		# converting float to byte array
 class Lexer:
 
 	NUM, ID, IF, ELSE, WHILE, DO, LBRA, RBRA, LPAR, RPAR, PLUS, MINUS, LESS, \
-	EQUAL, SEMICOLON, EOF, STR = range(17)
+	EQUAL, SEMICOLON, EOF, STR, CONCAT = range(18)
 
 	# специальные символы языка
 	SYMBOLS = { '{': LBRA, '}': RBRA, '=': EQUAL, ';': SEMICOLON, '(': LPAR,
-		')': RPAR, '+': PLUS, '-': MINUS, '<': LESS }
+		')': RPAR, '+': PLUS, '-': MINUS, '<': LESS, '\'': CONCAT }
 
 	# ключевые слова
 	WORDS = { 'if': IF, 'else': ELSE, 'do': DO, 'while': WHILE }
@@ -96,7 +99,7 @@ class Node:
 
 class Parser:
 
-	VAR, CONST, ADD, SUB, LT, SET, IF1, IF2, WHILE, DO, EMPTY, SEQ, EXPR, PROG, STRING = range(15)
+	VAR, CONST, ADD, SUB, LT, SET, IF1, IF2, WHILE, DO, EMPTY, SEQ, EXPR, PROG, STRING, CONCAT = range(16)
 
 	def __init__(self, lexer):
 		self.lexer = lexer
@@ -123,11 +126,13 @@ class Parser:
 
 	def summa(self):
 		n = self.term()
-		while self.lexer.sym == Lexer.PLUS or self.lexer.sym == Lexer.MINUS:
+		while self.lexer.sym == Lexer.PLUS or self.lexer.sym == Lexer.MINUS or self.lexer.sym == Lexer.CONCAT:
 			if self.lexer.sym == Lexer.PLUS:
 				kind = Parser.ADD
-			else:
+			elif self.lexer.sym == Lexer.MINUS:
 				kind = Parser.SUB
+			else:
+				kind = Parser.CONCAT
 			self.lexer.next_tok()
 			n = Node(kind, op1 = n, op2 = self.term())
 		return n
@@ -224,7 +229,7 @@ class Parser:
 
 
 
-IFETCH, ISTORE, IPUSH, IPOP, IADD, ISUB, ILT, JZ, JNZ, JMP, HALT = range(11)
+IFETCH, ISTORE, IPUSH, IPOP, IADD, ISUB, ILT, JZ, JNZ, JMP, HALT, ICONCAT = range(12)
 
 class VirtualMachine:
 
@@ -307,6 +312,10 @@ class Compiler:
 			self.compile(node.op1)
 			self.compile(node.op2)
 			self.gen(ISUB)
+		elif node.kind == Parser.CONCAT:
+			self.compile(node.op1)
+			self.compile(node.op2)
+			self.gen(ICONCAT)
 		elif node.kind == Parser.LT:
 			self.compile(node.op1)
 			self.compile(node.op2)
