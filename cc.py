@@ -84,7 +84,7 @@ class Lexer:
 				self.sym = Lexer.STR
 			else:
 				self.error('Unexpected symbol: ' + self.ch)
-		#self.print_tok()
+		self.print_tok()
 
 class Node:
 	def __init__(self, kind, value = None, op1 = None, op2 = None, op3 = None):
@@ -375,13 +375,17 @@ def main_test_parser():
 def main_compile():
 	lexer = Lexer() 
 	parser = Parser(lexer)
+	print("Lexer processing result:")
 	node = parser.parse()
+	print("Parser processing result:")
+	parser.print_node(node, 1)
 	compiler = Compiler()
 	program = compiler.compile(node)
+	print("Compiler processing result:")
 	print(program)
 
 if __name__ == "__main__":
-	print(sys.float_info)
+	#print(sys.float_info)
 	main()
 
 
